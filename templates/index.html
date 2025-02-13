@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Breed Prediction</title>
+    <style>
+        /* Centralizando o conteúdo da página */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px; /* Largura fixa para a container */
+            max-height: 600px; /* Limite de altura */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Alinha os elementos no topo */
+            overflow: hidden;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #image-container img {
+            margin-top: 20px;
+            width: 100%; /* Largura da imagem ajustada para a tela */
+            max-width: 300px; /* Tamanho máximo da imagem */
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .prediction {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .probability {
+            font-size: 1.1em;
+            color: green;
+        }
+
+        /* Posição fixa para o botão de envio */
+        .fixed-button {
+            position: fixed;
+            bottom: 30px; /* Ajusta a distância do botão da parte inferior */
+            width: 400px; /* Largura fixa para o botão */
+            padding: 12px 0;
+            text-align: center;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .fixed-button:hover {
+            background-color: #45a049;
+        }
+
+        #upload-form {
+            margin-bottom: 80px; /* Espaço para o botão de envio fixo */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload uma foto de cachorro</h1>
+        <form action="/predict" method="post" enctype="multipart/form-data" id="upload-form">
+            <input type="file" name="file" id="file-input" required>
+        </form>
+
+        <div id="image-container">
+            <!-- A imagem será exibida aqui -->
+        </div>
+
+        <div id="prediction-result" class="result">
+            <div id="breed-name" class="prediction"></div>
+            <div id="probability" class="probability"></div>
+        </div>
+    </div>
+
+    <button class="fixed-button" form="upload-form" type="submit">Enviar</button>
+
+    <script>
+        // Função para exibir a imagem carregada
+        const fileInput = document.getElementById("file-input");
+        const imageContainer = document.getElementById("image-container");
+        const form = document.getElementById("upload-form");
+
+        fileInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    imageContainer.innerHTML = ""; // Limpar conteúdo anterior
+                    imageContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Lidar com a resposta do servidor e exibir a predição
+        form.onsubmit = async function (event) {
+            event.preventDefault(); // Impede o envio do formulário
+
+            const formData = new FormData(form);
+            const response = await fetch("/predict", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Exibir os resultados
+                const breedName = result.predicted_class;
+                const probability = result.probability.toFixed(2) + "%";
+
+                document.getElementById("breed-name").textContent = "Raça: " + breedName;
+                document.getElementById("probability").textContent = "Probabilidade: " + probability;
+                document.getElementById("prediction-result").style.display = "block";
+            } else {
+                alert("Erro: " + result.error);
+            }
+        };
+    </script>
+</body>
+</html>
